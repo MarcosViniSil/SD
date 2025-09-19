@@ -15,8 +15,11 @@ class ConnectionDB:
         self.myDb = None
 
     def createConnection(self) -> None:
-        self.myDb = mysql.connector.connect(host=self.HOST_DATABASE,port=self.PORT_DATABASE,user=self.USER_DATABASE,password=self.PASSWORD_DATABASE,database=self.NAME_DATABASE)
-        self.myCursor = self.myDb.cursor()
+        try:
+            self.myDb = mysql.connector.connect(host=self.HOST_DATABASE,port=self.PORT_DATABASE,user=self.USER_DATABASE,password=self.PASSWORD_DATABASE,database=self.NAME_DATABASE,connection_timeout=2)
+            self.myCursor = self.myDb.cursor()
+        except Exception as e:
+            raise
     
     def closeConnection(self) -> None:
         if self.myCursor:
