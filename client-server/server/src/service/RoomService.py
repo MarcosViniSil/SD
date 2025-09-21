@@ -26,6 +26,54 @@ class RoomService:
 
         return {"message":"Sala criada com sucesso"}    
 
+
+    def getRoomNames(self) -> dict:
+        logging.info(f"Requisição do tipo GET recebida para listagem das salas criadas")
+
+        start_time = time.perf_counter()
+
+        names = self.getNames()  
+
+        end_time = time.perf_counter()
+        operationTime = str(round((end_time - start_time)*1000,2))
+        
+        logging.info(f"Latência: {operationTime}ms")
+
+        return names 
+
+    def getNames(self) -> dict:
+        attempt = 0
+        max_retries = 5
+
+        while attempt < max_retries:
+            
+            try:
+                names = self.chatRepository.getAllRooms()
+                return self.convertDictToArray(names)
+            except Exception as e:
+                logging.error(f"Na tentativa {attempt} o seguinte erro ocorreu {e}")   
+        
+            time.sleep(self.calculateJitter(attempt))
+            attempt += 1
+        
+        self.handleMessageFail(max_retries)
+        
+    
+    def convertDictToArray(self,data:dict) -> dict:
+        try:
+            result = []
+            for row in data:
+                roomName = row
+                if roomName is not None and roomName[0] is not None:
+                    result.append({
+                        "roomName":roomName[0],
+                    })
+            return result
+        except Exception as e:
+            logging.error(f"O seguinte erro ocorreu na tentativa de converter os nomes das salas para o uma lista de dict: {e}")   
+            raise ValueError("Erro ao converter dados para lista")
+
+
     def handleInsertRoomName(self,roomName:str) -> None:
         attempt = 0
         max_retries = 5
