@@ -12,10 +12,10 @@ class NickNameService:
     def registerNickName(self,name:str) -> dict:
         logging.info(f"Requisição do tipo POST recebida para criação do nick name {name}")
 
-        self.verifyLength(name)
-        
         start_time = time.perf_counter()
 
+        self.verifyLength(name)
+    
         self.handleInsertNickName(name)
 
         end_time = time.perf_counter()

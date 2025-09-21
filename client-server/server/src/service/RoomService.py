@@ -13,9 +13,9 @@ class RoomService:
     def registerRoomName(self,roomName:str) -> dict:
         logging.info(f"Requisição do tipo POST recebida para criação de uma sala de nome {roomName}")
 
-        self.verifyLength(roomName)
-
         start_time = time.perf_counter()
+        
+        self.verifyLength(roomName)
 
         self.handleInsertRoomName(roomName)
 
@@ -48,8 +48,8 @@ class RoomService:
         while attempt < max_retries:
             
             try:
-                names = self.chatRepository.getAllRooms()
-                return self.convertDictToArray(names)
+                rows = self.chatRepository.getAllRooms()
+                return self.convertDictToArray(rows)
             except Exception as e:
                 logging.error(f"Na tentativa {attempt} o seguinte erro ocorreu {e}")   
         
@@ -63,10 +63,12 @@ class RoomService:
         try:
             result = []
             for row in data:
-                roomName = row
-                if roomName is not None and roomName[0] is not None:
+                name = row[0]
+                id = row[1]
+                if row is not None and name is not None and id is not None:
                     result.append({
-                        "roomName":roomName[0],
+                        "roomName":name,
+                        "id":id
                     })
             return result
         except Exception as e:
@@ -117,4 +119,10 @@ class RoomService:
         jitter = random.uniform(0.8, 1.2)
         sleep_for = wait_time * jitter
         return sleep_for
+    
+    
+    def handleMessageFail(self,max_retries:int):
+        logging.error(f"Falha ao tentar operar maniulação de sala {max_retries} tentativas")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Após algumas tentativas não foi possível executar a operação.Tente novamente")
 
