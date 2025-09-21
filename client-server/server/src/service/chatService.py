@@ -1,5 +1,6 @@
 from datetime import datetime,timezone
-from src.models import Interaction
+from src.models.Message import Message
+from src.models.Interaction import Interaction
 from src.repository.chatRepository import ChatRepository
 from fastapi import HTTPException, status,Response
 import logging
@@ -9,9 +10,6 @@ class ChatService:
 
     def __init__(self,chatRepository:ChatRepository):
         self.chatRepository = chatRepository
-
-    def test(self):
-        return "teste"
     
     def registerMessage(self,roomId:int,interaction : Interaction) -> dict:
         logging.info(f"Requisição do tipo POST recebida para criação de uma interação")
@@ -38,18 +36,36 @@ class ChatService:
 
         return {"content":"Mensagem salva com sucesso"}
 
+    def callGetMessages(self,timesTamp:int,roomId:int,lastId:int,limit:int) -> dict:
+        logging.info(f"Requisição do tipo GET recebida para leitura das mensagens")
+        
+        start_time = time.perf_counter()
+        self.callVerifyRoomExists(roomId)
+
+        rows = self.tryOperation(method=self.getMessages, timesTamp=timesTamp,roomId=roomId,lastId=lastId,limit=limit)
+        data =  self.convertDictToArray(rows)
+        
+        end_time = time.perf_counter()
+        operationTime = str(round((end_time - start_time)*1000,2))
+        
+        logging.info(f"Latência: {operationTime}ms")
+
+        return data
+
+    def getMessages(self,timesTamp:int,roomId:int,lastId:int,limit:int) -> Message:
+        return self.chatRepository.getMessages(timesTamp,lastId,roomId,limit)
 
     def callVerifyRoomExists(self,roomId:int) -> None:
-        self.handleInsertRoomName(method=self.verifyIfRoomExists, roomId=roomId)
+        self.tryOperation(method=self.verifyIfRoomExists, roomId=roomId)
 
     def callVerifyIfNickNameExists(self,nickName:str) -> int:
-        return self.handleInsertRoomName(method=self.verifyIfNickNameExists, nickName=nickName)
+        return self.tryOperation(method=self.verifyIfNickNameExists, nickName=nickName)
 
     def callVerifyIdemKey(self,idemKey:str) -> None:
-        self.handleInsertRoomName(method=self.verifyIdemKey, idemKey=idemKey)
+        self.tryOperation(method=self.verifyIdemKey, idemKey=idemKey)
 
     def callCreateInteraction(self,interaction : Interaction,nickNameId:int,roomId:int) -> None:
-        self.handleInsertRoomName(method=self.createInteraction, interaction=interaction,nickNameId=nickNameId,roomId=roomId)
+        self.tryOperation(method=self.createInteraction, interaction=interaction,nickNameId=nickNameId,roomId=roomId)
 
     def createInteraction(self,interaction : Interaction,nickNameId:int,roomId:int) -> None:
         timesTamp = int(time.time() * 1000)
@@ -68,8 +84,31 @@ class ChatService:
     def verifyIfRoomExists(self,roomId:int) -> None:
         if not self.chatRepository.isRoomExists(roomId):
             raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,detail="A sala informada não existe")
-            
-    def handleInsertRoomName(self,method = None,*args, **kwargs) -> None:
+
+    def convertDictToArray(self,data:dict) -> dict:
+        try:
+            result = []
+            for row in data:
+                print(row)
+                message = row[0]
+                nickName = row[1]
+                messageDate = row[2]
+                messageId = row[3]
+                lastTimesTamp = row[4]
+                if row is not None and message is not None and nickName is not None and messageDate is not None and messageId is not None:
+                    result.append({
+                        "message":message,
+                        "nickName":nickName,
+                        "date":self.convertTimesTampToDate(messageDate),
+                        "messageId":messageId,
+                        "timesTamp":lastTimesTamp
+                    })
+            return result
+        except Exception as e:
+            logging.error(f"O seguinte erro ocorreu na tentativa de converter mensagens do chat para o uma lista de dict: {e}")   
+            raise ValueError("Erro ao converter dados para lista")
+
+    def tryOperation(self,method = None,*args, **kwargs) -> None:
         attempt = 0
         max_retries = 5
 
@@ -115,4 +154,12 @@ class ChatService:
             return True
         except (ValueError, OSError, OverflowError):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"O timestamp informado não á válido")
+                    detail=f"O timestamp informado não é válido")
+        
+    def convertTimesTampToDate(self,timesTamp:int) -> str:
+        print(timesTamp)
+        self.isValidTimesTamp(timesTamp)
+        timesTamp = float(timesTamp)
+        date = datetime.fromtimestamp(timesTamp / 1e3)
+        print(date.strftime("%d/%m/%Y %H:%M"))
+        return date.strftime("%d/%m/%Y %H:%M")

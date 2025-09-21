@@ -99,7 +99,7 @@ class ChatRepository:
         return row[0]
     
         
-    def createInteraction(self,interaction : Interaction,nickNameId:int,roomId:int,timesTampServer:int) -> int:
+    def createInteraction(self,interaction : Interaction,nickNameId:int,roomId:int,timesTampServer:int) -> None:
         self.Db.createConnection()
         sql = """
             INSERT INTO Interaction (nickNameId,roomId,idemKey,messageInteraction,timestamp_client,timestamp_server)
@@ -109,4 +109,20 @@ class ChatRepository:
                                        interaction.timestampClient,timesTampServer))
         self.Db.myDb.commit()
         self.Db.closeConnection()
+
+    def getMessages(self,timesTamp:int,lastId:int,roomId:int,limit:int) -> list:
+        self.Db.createConnection()
+        sql = """
+                SELECT messageInteraction,nickName,timestamp_client,it.id,it.timestamp_server FROM Interaction AS it 
+                INNER JOIN NickName AS nn ON nn.id = it.nickNameId 
+                WHERE roomId = %s AND (it.timestamp_server > %s OR (it.timestamp_server = %s AND it.id > %s))
+                ORDER BY timestamp_server ASC LIMIT %s;
+          """
+        self.Db.myCursor.execute(sql,(roomId,timesTamp,timesTamp,lastId,limit))
+        row = self.Db.myCursor.fetchall()  
+        self.Db.closeConnection()
+        if row is None:
+            return []
+        return row
+
 

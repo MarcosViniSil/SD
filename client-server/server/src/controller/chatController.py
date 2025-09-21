@@ -7,10 +7,11 @@ from typing import Annotated
 
 routerChat = APIRouter()
 
-@routerChat.get("/test")
-async def test(chatService: ChatService = Depends(getChatService)):
-    return chatService.test()
-
 @routerChat.post("/groups/{id}/messages")
 async def test(id: int,interaction : Interaction,chatService: ChatService = Depends(getChatService)):
     return chatService.registerMessage(id,interaction)
+
+
+@routerChat.get("/groups/{id}/messages")
+async def test(timesTamp:int, roomId:int,lastId:int,limit:int,chatService: ChatService = Depends(getChatService)):
+    return chatService.callGetMessages(timesTamp,roomId,lastId,limit)
