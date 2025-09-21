@@ -37,6 +37,7 @@ class ChatService:
         return {"content":"Mensagem salva com sucesso"}
 
     def callGetMessages(self,timesTamp:int,roomId:int,lastId:int,limit:int) -> dict:
+        time.sleep(10)
         logging.info(f"Requisição do tipo GET recebida para leitura das mensagens")
         
         start_time = time.perf_counter()
