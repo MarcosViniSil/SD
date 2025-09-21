@@ -3,6 +3,8 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.controller.chatController import routerChat
+from src.controller.NickNameController import routerNickName
+from src.controller.RoomNameController import routerRoomName
 import uvicorn
 import os
 
@@ -26,6 +28,8 @@ def root():
 
 
 app.include_router(routerChat)
+app.include_router(routerNickName)
+app.include_router(routerRoomName)
 
 #ifconfig | grep "inet" | head -n 1 | awk '{print $2}'
 if __name__ == "__main__":

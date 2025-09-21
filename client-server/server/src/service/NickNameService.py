@@ -3,14 +3,12 @@ from fastapi import HTTPException, status
 import logging
 import time,random
 
-class ChatService:
+class NickNameService:
 
     def __init__(self,chatRepository:ChatRepository):
         self.chatRepository = chatRepository
 
-    def test(self):
-        return "teste"
-    
+
     def registerNickName(self,name:str) -> dict:
         logging.info(f"Requisição do tipo POST recebida para criação do nick name {name}")
 
@@ -25,24 +23,8 @@ class ChatService:
         
         logging.info(f"Latência: {operationTime}ms")
 
-        return {"message":"Nick name criado com sucesso"}
-
-    def registerRoomName(self,roomName:str) -> dict:
-        logging.info(f"Requisição do tipo POST recebida para criação de uma sala com nome {roomName}")
-        
-        self.verifyLength(roomName)
-
-        start_time = time.perf_counter()
-
-        #TODO logic
-
-        end_time = time.perf_counter()
-        operationTime = str(round((end_time - start_time)*1000,2))
-        
-        logging.info(f"Latência: {operationTime}ms")
-
-        return {"message":"Sala criada com sucesso"}
-
+        return {"message":"Nick name criado com sucesso"}     
+    
     def handleInsertNickName(self,name:str) -> None:
         attempt = 0
         max_retries = 5
@@ -83,11 +65,13 @@ class ChatService:
 
     def verifyLength(self,toCompare:str) -> None:
         if len(toCompare) < 3 or len(toCompare) > 30:
-            logging.error(f"Solicitação nome de tamanho {len(toCompare)} inválida")
+            logging.error(f"Solicitação de nick name de de tamanho {len(toCompare)} inválida")
             raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,detail="O nome deve ser maior que 3 e menor que 30")
-
+        
     def calculateJitter(self,attempt:int) -> float:
         wait_time = (0.5 * (attempt + 1))  
         jitter = random.uniform(0.8, 1.2)
         sleep_for = wait_time * jitter
         return sleep_for
+
+

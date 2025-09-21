@@ -5,7 +5,7 @@ CREATE TABLE Room(
 
 CREATE TABLE NickName(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nickName VARCHAR(255)
+    nickName VARCHAR(255) UNIQUE
 );
 
 CREATE TABLE Interaction(
@@ -18,3 +18,6 @@ CREATE TABLE Interaction(
     FOREIGN KEY (nickNameId) REFERENCES NickName(id),
     FOREIGN KEY (roomId) REFERENCES Room(id)
 );
+
+CREATE UNIQUE INDEX nickNameIndex
+ON NickName (nickName);

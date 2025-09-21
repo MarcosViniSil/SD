@@ -18,15 +18,36 @@ class ChatRepository:
         self.Db.myDb.commit()
         self.Db.closeConnection()
 
+    def insertRoomName(self, roomName: str) -> None:
+        
+        self.Db.createConnection()
+        sql = """
+            INSERT INTO Room (roomName) VALUES (%s)
+          """
+        self.Db.myCursor.execute(sql, (roomName,))
+        self.Db.myDb.commit()
+        self.Db.closeConnection()
+
     def isNameAlreadyTaken(self, nickName: str) -> bool:
         self.Db.createConnection()
         sql = """
-            SELECT id FROM NickName WHERE nickName = %s LIMIT 1
+           SELECT EXISTS(SELECT 1 FROM NickName WHERE nickName = %s)
         """
         self.Db.myCursor.execute(sql, (nickName,))
         row = self.Db.myCursor.fetchone()  
         
         self.Db.closeConnection()
+        return row[0] > 0
+    
+    def isRoomNameAlreadyTaken(self, roomName: str) -> bool:
+        self.Db.createConnection()
+        sql = """
+            SELECT EXISTS(SELECT 1 FROM Room WHERE roomName = %s)
+        """
+        self.Db.myCursor.execute(sql, (roomName,))
+        row = self.Db.myCursor.fetchone()  
+        
+        self.Db.closeConnection()
 
-        return row is not None
+        return row[0] > 0
 
