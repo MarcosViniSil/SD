@@ -41,22 +41,13 @@ class RoomService:
 
         return names 
 
-    def getNames(self) -> dict:
-        attempt = 0
-        max_retries = 5
-
-        while attempt < max_retries:
-            
-            try:
-                rows = self.chatRepository.getAllRooms()
-                return self.convertDictToArray(rows)
-            except Exception as e:
-                logging.error(f"Na tentativa {attempt} o seguinte erro ocorreu {e}")   
+    def getNames(self) -> dict: 
+        try:
+            rows = self.chatRepository.getAllRooms()
+            return self.convertDictToArray(rows)
+        except Exception as e:
+            logging.error(f"Na tentativa {attempt} o seguinte erro ocorreu {e}")   
         
-            time.sleep(self.calculateJitter(attempt))
-            attempt += 1
-        
-        self.handleMessageFail(max_retries)
         
     
     def convertDictToArray(self,data:dict) -> dict:
@@ -77,23 +68,17 @@ class RoomService:
 
 
     def handleInsertRoomName(self,roomName:str) -> None:
-        attempt = 0
-        max_retries = 5
 
-        while attempt < max_retries:
-            self.verifyRoomName(roomName)
-            
-            try:
-                self.chatRepository.insertRoomName(roomName)
-                logging.info(f"Sala de nome {roomName} criado com sucesso")
-                return
-            except Exception as e:
-                logging.error(f"Na tentativa {attempt} o seguinte erro ocorreu {e}")   
+        self.verifyRoomName(roomName)
         
-            time.sleep(self.calculateJitter(attempt))
-            attempt += 1
+        try:
+            self.chatRepository.insertRoomName(roomName)
+            logging.info(f"Sala de nome {roomName} criado com sucesso")
+            return
+        except Exception as e:
+            logging.error(f"Ocorreu um erro ao inserir nome da sala {e}")   
+            raise ValueError("Ocorreu um erro ao criar sala, tente novamente")
         
-        self.handleMessageFail(max_retries)
 
     def verifyRoomName(self,roomName:str) -> None:
         try:

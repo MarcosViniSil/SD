@@ -53,7 +53,10 @@ class ChatService:
         return data
 
     def getMessages(self,timesTamp:int,roomId:int,lastId:int,limit:int) -> Message:
-        return self.chatRepository.getMessages(timesTamp,lastId,roomId,limit)
+        try:
+            return self.chatRepository.getMessages(timesTamp,lastId,roomId,limit)
+        except Exception as e:
+            logging.error(f"O seguinte erro ocorreu na tentativa de obter as mensagens do chat {e}")
 
     def callVerifyRoomExists(self,roomId:int) -> None:
         self.tryOperation(method=self.verifyIfRoomExists, roomId=roomId)
@@ -106,28 +109,17 @@ class ChatService:
             return result
         except Exception as e:
             logging.error(f"O seguinte erro ocorreu na tentativa de converter mensagens do chat para o uma lista de dict: {e}")   
-            raise ValueError("Erro ao converter dados para lista")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Ocorreu um erro ao realzizar operação, tente novamente")
 
     def tryOperation(self,method = None,*args, **kwargs) -> None:
-        attempt = 0
-        max_retries = 5
-
-        while attempt < max_retries:
-            try:
-                result = method(*args, **kwargs)
-                return result
-            except Exception as e:
-                if isinstance(e, HTTPException):
-                    raise e
-                print(method)
-                logging.error(f"Na tentativa {attempt} o seguinte erro ocorreu {e}")   
-        
-            time.sleep(self.calculateJitter(attempt))
-            attempt += 1
-        
-        self.handleMessageFail(max_retries)
-            
-
+        try:
+            result = method(*args, **kwargs)
+            return result
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                raise e
+            logging.error(f"ao tentar executar o método {method} o seguinte erro ocorreu {e}")   
+    
     def calculateJitter(self,attempt:int) -> float:
         wait_time = (0.5 * (attempt + 1))  
         jitter = random.uniform(0.8, 1.2)
@@ -157,7 +149,6 @@ class ChatService:
                     detail=f"O timestamp informado não é válido")
         
     def convertTimesTampToDate(self,timesTamp:int) -> str:
-        print(timesTamp)
         self.isValidTimesTamp(timesTamp)
         timesTamp = float(timesTamp)
         date = datetime.fromtimestamp(timesTamp / 1e3)

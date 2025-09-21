@@ -26,24 +26,17 @@ class NickNameService:
         return {"message":"Nick name criado com sucesso"}     
     
     def handleInsertNickName(self,name:str) -> None:
-        attempt = 0
-        max_retries = 5
 
-        while attempt < max_retries:
-            self.verifyNickName(name)
-            
-            try:
-                self.chatRepository.insertNickName(nickName=name)
-                logging.info(f"Nick name {name} criado com sucesso")
-                return
-            except Exception as e:
-                logging.error(f"Na tentativa {attempt} o seguinte erro ocorreu {e}")   
+        self.verifyNickName(name)
         
-            time.sleep(self.calculateJitter(attempt))
-            attempt += 1
+        try:
+            self.chatRepository.insertNickName(nickName=name)
+            logging.info(f"Nick name {name} criado com sucesso")
+            return
+        except Exception as e:
+            logging.error(f"O seguinte erro ocorreu ao inserir nick name {e}")   
+            raise ValueError("Ocorreu um erro ao inserir nick name, tente novamente")
         
-        self.handleMessageFail(max_retries)
-
     def handleNickAlreadyTaken(self,name:str) -> None:
         logging.error(f"Nick name {name} já solicitado")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
