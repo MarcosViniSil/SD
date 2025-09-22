@@ -12,6 +12,6 @@ async def test(id: int,interaction : Interaction,chatService: ChatService = Depe
     return chatService.registerMessage(id,interaction)
 
 
-@routerChat.get("/groups/{id}/messages")
+@routerChat.get("/groups/{roomId}/messages")
 async def test(timesTamp:int, roomId:int,lastId:int,limit:int,chatService: ChatService = Depends(getChatService)):
     return chatService.callGetMessages(timesTamp,roomId,lastId,limit)

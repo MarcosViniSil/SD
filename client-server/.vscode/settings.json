@@ -5,6 +5,7 @@
         "./server",
         "./server",
         "./client",
+        "./client",
         "./client"
     ]
 }

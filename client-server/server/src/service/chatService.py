@@ -37,7 +37,6 @@ class ChatService:
         return {"content":"Mensagem salva com sucesso"}
 
     def callGetMessages(self,timesTamp:int,roomId:int,lastId:int,limit:int) -> dict:
-        time.sleep(10)
         logging.info(f"Requisição do tipo GET recebida para leitura das mensagens")
         
         start_time = time.perf_counter()
@@ -150,8 +149,11 @@ class ChatService:
                     detail=f"O timestamp informado não é válido")
         
     def convertTimesTampToDate(self,timesTamp:int) -> str:
+        print(timesTamp)
         self.isValidTimesTamp(timesTamp)
         timesTamp = float(timesTamp)
-        date = datetime.fromtimestamp(timesTamp / 1e3)
+        if timesTamp > 1e12: 
+            timesTamp /= 1000  
+        date = datetime.fromtimestamp(timesTamp)
         print(date.strftime("%d/%m/%Y %H:%M"))
         return date.strftime("%d/%m/%Y %H:%M")

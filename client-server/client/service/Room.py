@@ -5,24 +5,25 @@ from dotenv import load_dotenv
 load_dotenv()
 import os
 from rich import print
-
+import config
 url = os.environ["URL"]
 
 def callCreateRoom():
     roomName = input("Digite o nome da sala que deseja criar: ")
     tryOperation(method=createRoom,roomName=roomName)
 
-def callGetNameRooms(isToPrint):
-    return tryOperation(method=getRooms,isToPrint=isToPrint)
+def callGetNameRooms():
+    return tryOperation(method=getRooms)
 
-def getRooms(isToPrint):
+def getRooms():
      print("Buscando salas, aguarde...", end='\n', flush=True)
      
      response = requests.get(f"{url}/groups/")
      if response.ok:
         rooms = response.json()
-        if isToPrint:
-            printRooms(rooms,"SALAS")
+        config.rooms = rooms
+
+        printRooms(config.rooms,"SALAS")
         return rooms
      else:
         if response.status_code >= 500:
