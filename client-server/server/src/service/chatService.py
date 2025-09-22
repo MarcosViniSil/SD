@@ -92,7 +92,6 @@ class ChatService:
         try:
             result = []
             for row in data:
-                print(row)
                 message = row[0]
                 nickName = row[1]
                 messageDate = row[2]
@@ -149,11 +148,9 @@ class ChatService:
                     detail=f"O timestamp informado não é válido")
         
     def convertTimesTampToDate(self,timesTamp:int) -> str:
-        print(timesTamp)
         self.isValidTimesTamp(timesTamp)
         timesTamp = float(timesTamp)
         if timesTamp > 1e12: 
             timesTamp /= 1000  
         date = datetime.fromtimestamp(timesTamp)
-        print(date.strftime("%d/%m/%Y %H:%M"))
         return date.strftime("%d/%m/%Y %H:%M")

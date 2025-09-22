@@ -47,7 +47,7 @@ def listen_user():
 
 def poll_messages():
     while True:
-        time.sleep(15)
+        time.sleep(10)
         try:
             tryOperation(getMessages)
         except Exception as e:
@@ -76,8 +76,8 @@ def getGroup():
     if not config.alreadyFetchRooms:
         config.rooms = callGetNameRooms()
         config.alreadyFetchRooms = True
-    
-    printRooms(config.rooms,"SALAS")
+    else: 
+        printRooms(config.rooms,"SALAS")
     roomName = input("Digite o nome da sala para entrar: ")
     if roomName == '0':
         return -1
