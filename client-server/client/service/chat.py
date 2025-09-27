@@ -19,6 +19,11 @@ def createChat():
     if getGroup() == -1:
         return
     getNickName()
+    response = requests.get(f"{url}/server-time")
+    if response.ok:
+        config.lastTimesTamp = response.json()["serverTime"]
+    else:
+        config.lastTimesTamp = getTimesTamp()  
     getMessages()
 
     threading.Thread(target=callInputUser, daemon=True).start()
@@ -33,10 +38,15 @@ def callInputUser():
 def listen_user():
     while True:
         print()
+        
         msg = input("Digite sua mensagem: ")
         if msg.strip().lower() == "sair":
             print("Saindo do chat...")
-            os._exit(0)  
+            os._exit(0)
+
+        if len(msg) < 3 or len(msg) > 200:
+              printCustomizeMessage("Mensagens devem conter no mínimo 3 e no máximo 200 caracteres", "red")
+              continue
         response = requests.post(f"{url}/groups/{config.roomId}/messages",
                 json={"nickName": config.nickName, "message": msg,"idemKey":generateHash(),"timestampClient":str(getTimesTamp())})
             
@@ -54,12 +64,13 @@ def poll_messages():
             printCustomizeMessage(f"Erro ao buscar mensagens: {e}", "red")
 
 def getMessages():
-    currentTimesTamp = getTimesTamp() if config.lastTimesTamp == 0 else config.lastTimesTamp
-    printCustomizeMessage("Buscando novas mensagens...", "yellow")
-    
-    stringUrl = f"{url}/groups/{config.roomId}/messages?timesTamp={currentTimesTamp}&lastId={config.lastId}&limit=10"
-    response = requests.get(stringUrl)
 
+    currentTimesTamp = getTimesTamp() if config.lastTimesTamp == 0 else config.lastTimesTamp
+    
+    printCustomizeMessage("Buscando novas mensagens...", "yellow")
+    stringUrl = f"{url}/groups/{config.roomId}/messages?timesTamp={currentTimesTamp}&lastId={config.lastId}&limit=10"
+    
+    response = requests.get(stringUrl)
     if response.ok:
         config.messages += response.json()
         printMessages(config.messages)
@@ -69,19 +80,17 @@ def getMessages():
         printCustomizeMessage(detail, "red")
 
 def getGroup():
-    if config.alreadyFetchRooms and len(config.rooms) == 0:
+    config.rooms = callGetNameRooms()
+    if len(config.rooms) == 0:
         printCustomizeMessage("Nenhuma sala disponível. Crie uma!", "yellow")
-        return -1 
-
-    if not config.alreadyFetchRooms:
-        config.rooms = callGetNameRooms()
-        config.alreadyFetchRooms = True
-    else: 
-        printRooms(config.rooms,"SALAS")
+        return -1
+    config.alreadyFetchRooms = True
     roomName = input("Digite o nome da sala para entrar: ")
     if roomName == '0':
         return -1
+    
     getRoomId(roomName)
+    
     while config.roomId == -1:
         printCustomizeMessage("Sala não encontrada, tente novamente", "red")
         printRooms(config.rooms,"SALAS")
@@ -104,29 +113,27 @@ def getRoomId(nameRoom):
 
 def getTimesTamp():
     current_datetime = datetime.now()
-    return int(current_datetime.timestamp())
+    return int(current_datetime.timestamp() * 1000)
 
 def printMessages(messages):
-    sys.stdout.write("\r")  
-    sys.stdout.flush()
-
     for message in messages:
         print(f"{message['date']} - {message['nickName']} -> {message['message']}")
-
+    
     buffer = readline.get_line_buffer()
     sys.stdout.write("Digite sua mensagem: " + buffer)
     sys.stdout.flush()
 
 def getLastData(messages):
-   lastId = 0
-   lastTimesTamp = 0
-   for message in messages:  
-       if message['messageId'] > lastId:
-           lastId = message['messageId']
-           lastTimesTamp = message['timesTamp']
-    
-   config.lastId = lastId
-   config.lastTimesTamp = lastTimesTamp
+    lastId = 0
+    lastTimesTamp = 0
+    for message in messages:
+        if int(message['messageId']) > lastId:
+            lastId = int(message['messageId'])
+            lastTimesTamp = int(message['timesTamp']) 
+
+    if lastId > 0 and lastTimesTamp > 0:
+        config.lastId = lastId
+        config.lastTimesTamp = lastTimesTamp
 
 def generateHash():
     my_uuid = uuid.uuid4()

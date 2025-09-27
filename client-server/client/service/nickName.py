@@ -36,6 +36,7 @@ def tryOperation(method = None,*args, **kwargs) -> None:
             result = method(*args, **kwargs)
             return result
         except Exception as e:
+            print(e)
             pass
     
         time.sleep(calculateJitter(attempt))

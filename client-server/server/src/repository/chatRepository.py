@@ -124,5 +124,19 @@ class ChatRepository:
         if row is None:
             return []
         return row
-
+    
+    def getMessagesFrom(self,timesTamp:int,roomId:int,limit:int) -> list:
+        self.Db.createConnection()
+        sql = """
+                SELECT messageInteraction,nickName,timestamp_client,it.id,it.timestamp_server FROM Interaction AS it 
+                INNER JOIN NickName AS nn ON nn.id = it.nickNameId 
+                WHERE roomId = %s AND it.timestamp_server > %s 
+                ORDER BY timestamp_server ASC LIMIT %s;
+          """
+        self.Db.myCursor.execute(sql,(roomId,timesTamp,limit))
+        row = self.Db.myCursor.fetchall()  
+        self.Db.closeConnection()
+        if row is None:
+            return []
+        return row
 

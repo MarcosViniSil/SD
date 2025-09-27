@@ -41,8 +41,13 @@ class ChatService:
         
         start_time = time.perf_counter()
         self.callVerifyRoomExists(roomId)
+        
+        rows = []   
+        if lastId == 0:
+            rows = self.tryOperation(method=self.getMessagesFrom, timesTamp=timesTamp,roomId=roomId,limit=limit)
+        else:
+            rows = self.tryOperation(method=self.getMessages, timesTamp=timesTamp,roomId=roomId,lastId=lastId,limit=limit)
 
-        rows = self.tryOperation(method=self.getMessages, timesTamp=timesTamp,roomId=roomId,lastId=lastId,limit=limit)
         data =  self.convertDictToArray(rows)
         
         end_time = time.perf_counter()
@@ -55,6 +60,12 @@ class ChatService:
     def getMessages(self,timesTamp:int,roomId:int,lastId:int,limit:int) -> Message:
         try:
             return self.chatRepository.getMessages(timesTamp,lastId,roomId,limit)
+        except Exception as e:
+            logging.error(f"O seguinte erro ocorreu na tentativa de obter as mensagens do chat {e}")
+
+    def getMessagesFrom(self,timesTamp:int,roomId:int,limit:int) -> Message:
+        try:
+            return self.chatRepository.getMessagesFrom(timesTamp,roomId,limit)
         except Exception as e:
             logging.error(f"O seguinte erro ocorreu na tentativa de obter as mensagens do chat {e}")
 
@@ -71,7 +82,7 @@ class ChatService:
         self.tryOperation(method=self.createInteraction, interaction=interaction,nickNameId=nickNameId,roomId=roomId)
 
     def createInteraction(self,interaction : Interaction,nickNameId:int,roomId:int) -> None:
-        timesTamp = int(time.time() * 1000)
+        timesTamp = self.getTimesTamp()
         self.chatRepository.createInteraction(interaction,nickNameId,roomId,timesTamp)
 
     def verifyIdemKey(self,idemKey:str) -> None:
@@ -108,7 +119,7 @@ class ChatService:
             return result
         except Exception as e:
             logging.error(f"O seguinte erro ocorreu na tentativa de converter mensagens do chat para o uma lista de dict: {e}")   
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Ocorreu um erro ao realzizar operação, tente novamente")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Ocorreu um erro ao realizar operação, tente novamente")
 
     def tryOperation(self,method = None,*args, **kwargs) -> None:
         try:
@@ -136,16 +147,16 @@ class ChatService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Mensagens devem conter no mínimo 3 e no máximo 200 caracteres")
 
-    def isValidTimesTamp(self,value, milliseconds=False):
+    def isValidTimesTamp(self, value):
         try:
-            ts = float(value)
-            if milliseconds:
-                ts /= 1000 
+            ts = float(value) / 1000  
             datetime.fromtimestamp(ts, tz=timezone.utc)
             return True
         except (ValueError, OSError, OverflowError):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"O timestamp informado não é válido")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"O timestamp informado não é válido"
+            )
         
     def convertTimesTampToDate(self,timesTamp:int) -> str:
         self.isValidTimesTamp(timesTamp)
@@ -154,3 +165,7 @@ class ChatService:
             timesTamp /= 1000  
         date = datetime.fromtimestamp(timesTamp)
         return date.strftime("%d/%m/%Y %H:%M")
+    
+    def getTimesTamp(self):
+        current_datetime = datetime.now()
+        return int(current_datetime.timestamp() * 1000)

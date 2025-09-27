@@ -46,10 +46,9 @@ class RoomService:
             rows = self.chatRepository.getAllRooms()
             return self.convertDictToArray(rows)
         except Exception as e:
-            logging.error(f"Na tentativa {attempt} o seguinte erro ocorreu {e}")   
+            logging.error(f"O seguinte erro ocorreu ao buscar os nomes das salas {e}")   
         
         
-    
     def convertDictToArray(self,data:dict) -> dict:
         try:
             result = []
@@ -110,4 +109,3 @@ class RoomService:
         logging.error(f"Falha ao tentar operar maniulação de sala {max_retries} tentativas")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Após algumas tentativas não foi possível executar a operação.Tente novamente")
-

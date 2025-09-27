@@ -1,5 +1,6 @@
 from datetime import date
 import logging
+import time
 from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware
 from src.controller.chatController import routerChat
@@ -34,6 +35,10 @@ async def root():
     await asyncio.sleep(10)
     return {"message": "working"}
 
+@app.get("/server-time")
+async def getServerTime():
+    timesTamp = int(time.time() * 1000)  
+    return {"serverTime": timesTamp}
 
 app.include_router(routerChat)
 app.include_router(routerNickName)
