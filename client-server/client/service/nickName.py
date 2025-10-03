@@ -21,7 +21,7 @@ def createNickName(nickName):
         printCustomizeMessage("Nick name criado com sucesso", "green")
         return nickName
     else:
-        if response.status_code >= 500:
+        if response.status_code >= 500 or response.status_code == 429:
             raise ValueError("Erro no servidor, tentando novamente")
         
         detail = response.json().get("detail", "Ocorreu um erro ao criar nickName, tente novamente")

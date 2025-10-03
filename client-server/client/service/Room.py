@@ -26,11 +26,11 @@ def getRooms():
         printRooms(config.rooms,"SALAS")
         return rooms
      else:
-        if response.status_code >= 500:
+        if response.status_code >= 500 or response.status_code == 429:
             raise ValueError("Erro no servidor, tentando novamente")
-        
-        detail = response.json().get("detail", "Ocorreu um erro ao criar sala, tente novamente")
-        printCustomizeMessage(detail, "red")
+        else:
+            detail = response.json().get("detail", "Ocorreu um erro ao criar sala, tente novamente")
+            printCustomizeMessage(detail, "red")
 
 def createRoom(roomName):
     print("Criando sala, aguarde...", end='', flush=True)
@@ -39,7 +39,7 @@ def createRoom(roomName):
     if response.ok:
         printCustomizeMessage("Sala criada com sucesso", "green")
     else:
-        if response.status_code >= 500:
+        if response.status_code >= 500 or response.status_code == 429:
             raise ValueError("Erro no servidor, tentando novamente")
         
         detail = response.json().get("detail", "Ocorreu um erro ao criar sala, tente novamente")

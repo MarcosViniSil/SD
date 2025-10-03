@@ -24,7 +24,7 @@ def createChat():
         config.lastTimesTamp = response.json()["serverTime"]
     else:
         config.lastTimesTamp = getTimesTamp()  
-    getMessages()
+    tryOperation(getMessages)
 
     threading.Thread(target=callInputUser, daemon=True).start()
     threading.Thread(target=poll_messages, daemon=True).start()
@@ -76,8 +76,11 @@ def getMessages():
         printMessages(config.messages)
         getLastData(config.messages)
     else:
-        detail = response.json().get("detail", "Erro ao buscar mensagens")
-        printCustomizeMessage(detail, "red")
+        if response.status_code == 429 or response.status_code >= 500:
+            raise ValueError("Tentando novamente")
+        else:
+            detail = response.json().get("detail", "Erro ao buscar mensagens")
+            printCustomizeMessage(detail, "red")
 
 def getGroup():
     config.rooms = callGetNameRooms()
